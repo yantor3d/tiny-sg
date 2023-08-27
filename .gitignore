@@ -1,0 +1,10 @@
+# python stuff
+*.pyc
+__pycache__
+
+# pytest stuff
+.coverage
+
+# miscellaneous
+todo
+

@@ -1,0 +1,82 @@
+{
+    "_fields": {
+        "1": {"entity_type": "Project", "name": "code", "type": "text"},
+        "2": {"entity_type": "Project", "name": "name", "type": "text"},
+        "3": {"entity_type": "Sequence", "name": "code", "type": "text"},
+        "4": {"entity_type": "Sequence", "name": "number", "type": "text"},
+        "5": {"entity_type": "Sequence", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Sequence.project"},
+        "6": {"entity_type": "Sequence", "name": "shots", "type": "multi_entity", "link": "Shot", "table":  "Connection:Shot.sequence-Sequence.shots"},
+        "7": {"entity_type": "Shot", "name": "code", "type": "text"},
+        "8": {"entity_type": "Shot", "name": "number", "type": "text"},
+        "9": {"entity_type": "Shot", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Shot.project"},
+        "10": {"entity_type": "Shot", "name": "sequence", "type": "entity", "link": "Sequence", "table":  "Connection:Shot.sequence-Sequence.shots"},
+        "11": {"entity_type": "Shot", "name": "assets", "type": "multi_entity", "link": "Asset", "table":  "Connection:Asset.shots-Shot.asset"},
+        "12": {"entity_type": "Asset", "name": "code", "type": "text"},
+        "13": {"entity_type": "Asset", "name": "name", "type": "text"},
+        "14": {"entity_type": "Asset", "name": "asset_type", "type": "enum", "values": ["Character", "Prop", "Set"]},
+        "15": {"entity_type": "Asset", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Asset.project"},
+        "16": {"entity_type": "Asset", "name": "shots", "type": "multi_entity", "link": "Shot", "table":  "Connection:Asset.shots-Shot.asset"}
+    },
+    "_schema": {
+        "1": {
+            "entity_type": "Project"
+        },
+        "2": {
+            "entity_type": "Sequence"
+        },
+        "3": {
+            "entity_type": "Shot"
+        },
+        "4": {
+            "entity_type": "Asset"
+        }
+    },
+    "Project": {
+        "1": {"code": "test", "name": "Test"}
+    },
+    "Asset": {
+        "1": {"code": "character.our_hero", "asset_type": "Character", "name": "our_hero"},
+        "2": {
+            "code": "character.the_villain",
+            "asset_type": "Character",
+            "name": "the_villain"
+        },
+        "3": {"code": "prop.sword", "asset_type": "Prop", "name": "sword"}
+    },
+    "Sequence": {
+        "1": {"code": "0100 - A", "number": "0100"},
+        "2": {"code": "0200 - B", "number": "0200"}
+    },
+    "Shot": {
+        "1": {"code": "0100.0010", "number": "0010"},
+        "2": {"code": "0100.0020", "number": "0020"},
+        "3": {"code": "0200.0010", "number": "0010"}
+    },
+    "Connection:Asset.project": {
+        "1": {"Asset": 1, "Project": 1},
+        "2": {"Asset": 2, "Project": 1},
+        "3": {"Asset": 3, "Project": 1}
+    },
+    "Connection:Shot.project": {
+        "1": {"Shot": 1, "Project": 1},
+        "2": {"Shot": 2, "Project": 1},
+        "3": {"Shot": 3, "Project": 1}
+    },
+    "Connection:Sequence.project": {
+        "1": {"Sequence": 1, "Project": 1},
+        "2": {"Sequence": 2, "Project": 1}
+    },
+    "Connection:Shot.sequence-Sequence.shots": {
+        "1": {"Shot": 1, "Sequence": 1},
+        "2": {"Shot": 2, "Sequence": 1},
+        "3": {"Shot": 3, "Sequence": 2}
+    },
+    "Connection:Asset.shots-Shot.asset": {
+        "1": {"Shot": 1, "Asset": 1},
+        "2": {"Shot": 1, "Asset": 3},
+        "3": {"Shot": 2, "Asset": 2},
+        "4": {"Shot": 3, "Asset": 1},
+        "5": {"Shot": 3, "Asset": 2},
+        "6": {"Shot": 3, "Asset": 3}
+    }
+}

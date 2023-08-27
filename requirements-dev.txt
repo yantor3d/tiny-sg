@@ -1,0 +1,8 @@
+frozendict
+mock
+pyfakefs
+pytest
+pytest-cov
+python-dateutil
+tinydb
+tox

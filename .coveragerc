@@ -1,0 +1,12 @@
+[html]
+directory = coveragehtml
+
+[paths]
+source = 
+  src
+
+[report]
+show_missing = True
+
+[run]
+omit = tests/*
