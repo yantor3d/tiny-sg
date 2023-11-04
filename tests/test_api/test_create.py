@@ -57,12 +57,26 @@ def test_create_invalidate_entity_field_value_error(connection):
         )
 
 
+def test_create_missing_required_field_error(connection):
+    with pytest.raises(
+        ValueError, match="Must set required fields for 'Asset' entity: asset_type, project"
+    ):
+        connection.create(
+            "Asset",
+            {
+                "code": "the_hero",
+                "name": "The Hero",
+            },
+        )
+
+
 def test_create(connection):
     result = connection.create(
         "Asset",
         {
             "asset_type": "Character",
-            "code": "The Hero of our Story",
+            "name": "The Hero",
+            "code": "the_hero",
             "project": {"code": "test", "id": 1, "type": "Project"},
         },
         [
@@ -74,7 +88,7 @@ def test_create(connection):
 
     assert result == {
         "asset_type": "Character",
-        "code": "The Hero of our Story",
+        "code": "the_hero",
         "id": 4,
         "project": {"name": "test", "id": 1, "type": "Project"},
         "type": "Asset",

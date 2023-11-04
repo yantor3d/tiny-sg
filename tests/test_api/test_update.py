@@ -66,7 +66,10 @@ def test_update(connection):
         "Asset",
         {
             "asset_type": "Character",
-            "code": "The Hero of our Story",
+            "code": "the_hero",
+            "name": "The Hero",
+            "project": {"code": "test", "id": 1, "type": "Project"},
+            "status": "Active",
         },
     )
 
@@ -74,16 +77,40 @@ def test_update(connection):
         result["type"],
         result["id"],
         {
-            "asset_type": None,
-            "code": "Actually the Villain",
-            "project": {"id": 1, "type": "Project"},
+            "name": "The Villain",
+            "code": "the_villain",
+            "project": {"id": 2, "type": "Project"},
+            "status": None,
         },
     )
 
     assert result is not None
-    assert "asset_type" not in result
-    assert result["code"] == "Actually the Villain"
-    assert result["project"] == {"name": "test", "id": 1, "type": "Project"}
+    assert result["code"] == "the_villain"
+    assert result["project"] == {"name": "prod", "id": 2, "type": "Project"}
+
+
+def test_update_required_field_error(connection):
+    result = connection.create(
+        "Asset",
+        {
+            "asset_type": "Character",
+            "code": "the_hero",
+            "name": "The Hero",
+            "project": {"code": "test", "id": 1, "type": "Project"},
+        },
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot unset required fields for 'Asset' entity: asset_type",
+    ):
+        connection.update(
+            result["type"],
+            result["id"],
+            {
+                "asset_type": None,
+            },
+        )
 
 
 def test_update_multi_entity_field(connection):
@@ -91,7 +118,9 @@ def test_update_multi_entity_field(connection):
         "Asset",
         {
             "asset_type": "Character",
-            "code": "The Hero of our Story",
+            "code": "the_hero",
+            "name": "The Hero",
+            "project": {"code": "test", "id": 1, "type": "Project"},
         },
     )
 

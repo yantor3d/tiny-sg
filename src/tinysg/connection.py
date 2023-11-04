@@ -68,12 +68,20 @@ class Connection(object):
             SchemaError: If the given entity type does not exist.
             SchemaError: If a value for a field that does not exist is provided.
             ValueError: If an invalid value is provided.
+            ValueError: If a required field is not provided, or is null.
 
         Returns:
             dict
         """
 
         payload = self.__get_entity_payload(entity_type, data)
+
+        missing_fields = self.__check_entity_payload(entity_type, payload)
+
+        if missing_fields:
+            raise ValueError(
+                f"Must set required fields for '{entity_type}' entity: {', '.join(missing_fields)}'"
+            )
 
         table = self._db.table(entity_type)
         entity_id = table._get_next_id()
@@ -283,6 +291,7 @@ class Connection(object):
             SchemaError: If a given field does not exist.
             ValueError: If an invalid value is provided.
             ValueError: If an invalid update mode is given for a multi-entity field.
+            ValueError: If a required field is not provided, or is null.
 
         Returns:
             dict
@@ -300,6 +309,14 @@ class Connection(object):
         # __get_entity_payload drops nulls - update the original data to preserve them
         payload = dict(data)
         payload.update(self.__get_entity_payload(entity_type, data, payload={}))
+
+        missing_fields = self.__check_entity_payload(entity_type, payload)
+        missing_fields = [field for field in missing_fields if field in data]
+
+        if missing_fields:
+            raise ValueError(
+                f"Cannot unset required fields for '{entity_type}' entity: {', '.join(missing_fields)}'"
+            )
 
         fields = self.schema_field_read_all(entity_type)
         fields_map = {field["name"]: field for field in fields}
@@ -635,6 +652,27 @@ class Connection(object):
         self.__set_linked_field_values(results, links)
 
         return results
+
+    def __check_entity_payload(self, entity_type: str, data: dict) -> List[str]:
+        """Return the missing required field(s) in the given entity payload.
+
+        Args:
+            entity_type (str): Type of entity to get the payload for.
+            data (dict): Entity payload to validate.
+
+        Returns:
+            list[str]
+        """
+
+        fields = self.schema_field_read_all(entity_type)
+
+        required_fields = [field for field in fields if field.get("required", False)]
+        missing_fields = [
+            field["name"] for field in required_fields if data.get(field["name"]) is None
+        ]
+        missing_fields.sort()
+
+        return missing_fields
 
     def __get_links_map(self, entity_list: List[dict]) -> Mapping:
         """Return a map of the linked entities in the given results.
