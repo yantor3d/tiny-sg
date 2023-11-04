@@ -2,6 +2,7 @@
 
 import json
 import pytest
+import re
 
 from tinysg import Connection
 from tinysg.exceptions import EntityNotFound, SchemaError
@@ -109,6 +110,45 @@ def test_update_required_field_error(connection):
             result["id"],
             {
                 "asset_type": None,
+            },
+        )
+
+
+def test_update_identifier_field_error(connection):
+    project = {"code": "test", "id": 1, "type": "Project"}
+
+    a = connection.create(
+        "Asset",
+        {
+            "asset_type": "Character",
+            "code": "the_hero",
+            "name": "The Hero",
+            "project": project,
+        },
+    )
+
+    connection.create(
+        "Asset",
+        {
+            "asset_type": "Character",
+            "code": "the_villain",
+            "name": "The Villain",
+            "project": project,
+        },
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"Cannot update 'Asset' ({a['id']}) because its new identifier field values are not unqiue: code, name"
+        ),
+    ):
+        connection.update(
+            a["type"],
+            a["id"],
+            {
+                "name": "The Villain",
+                "code": "the_villain",
             },
         )
 

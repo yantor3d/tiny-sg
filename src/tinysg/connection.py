@@ -83,6 +83,14 @@ class Connection(object):
                 f"Must set required fields for '{entity_type}' entity: {', '.join(missing_fields)}'"
             )
 
+        non_unique_fields = self.__check_entity_identifier(entity_type, payload)
+
+        if non_unique_fields:
+            raise ValueError(
+                f"Cannot create '{entity_type}' entity "
+                f"because its identifier field values are not unique: {', '.join(non_unique_fields)}"
+            )
+
         table = self._db.table(entity_type)
         entity_id = table._get_next_id()
         payload["id"] = int(entity_id)
@@ -301,7 +309,9 @@ class Connection(object):
 
         table = self._db.table(entity_type)
 
-        if table.get(doc_id=entity_id) is None:
+        entity = table.get(doc_id=entity_id)
+
+        if entity is None:
             raise EntityNotFound(
                 "A(n) 'f{entity_type}' entity for id f{entity_id} does not exist."
             )
@@ -316,6 +326,18 @@ class Connection(object):
         if missing_fields:
             raise ValueError(
                 f"Cannot unset required fields for '{entity_type}' entity: {', '.join(missing_fields)}'"
+            )
+
+        old_payload = dict(entity)
+        old_payload.update(payload)
+
+        non_unique_fields = self.__check_entity_identifier(entity_type, old_payload, entity_id)
+        non_unique_fields = [field for field in non_unique_fields if field in data]
+
+        if non_unique_fields:
+            raise ValueError(
+                f"Cannot update '{entity_type}' ({entity_id}) "
+                f"because its new identifier field values are not unqiue: {', '.join(non_unique_fields)}"
             )
 
         fields = self.schema_field_read_all(entity_type)
@@ -652,6 +674,38 @@ class Connection(object):
         self.__set_linked_field_values(results, links)
 
         return results
+
+    def __check_entity_identifier(
+        self, entity_type: str, data: dict, entity_id: int = None
+    ) -> bool:
+        """Return the identifier fields of the entity if another same values already exists.
+
+        Args:
+            entity_type (str): Type of entity to check the payload for.
+            data (dict): Entity payload to validate.
+            entity_id (id): Entity ID of the entity the payload is for.
+
+        Returns:
+            list[str]
+        """
+
+        result = []
+
+        identifier = {
+            field["name"]: data.get(field["name"])
+            for field in self.schema_field_read_all(entity_type)
+            if field.get("identifier", False)
+        }
+
+        if identifier:
+            filters = [[field, "is", value] for field, value in identifier.items()]
+            entity = self.find_one(entity_type, filters)
+
+            if (entity is not None) and (entity["id"] != entity_id):
+                result = list(identifier.keys())
+                result.sort()
+
+        return result
 
     def __check_entity_payload(self, entity_type: str, data: dict) -> List[str]:
         """Return the missing required field(s) in the given entity payload.

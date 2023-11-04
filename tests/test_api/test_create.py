@@ -2,6 +2,7 @@
 
 import json
 import pytest
+import re
 
 from tinysg import Connection
 from tinysg.exceptions import EntityNotFound, SchemaError
@@ -59,7 +60,8 @@ def test_create_invalidate_entity_field_value_error(connection):
 
 def test_create_missing_required_field_error(connection):
     with pytest.raises(
-        ValueError, match="Must set required fields for 'Asset' entity: asset_type, project"
+        ValueError,
+        match="Must set required fields for 'Asset' entity: asset_type, project",
     ):
         connection.create(
             "Asset",
@@ -68,6 +70,37 @@ def test_create_missing_required_field_error(connection):
                 "name": "The Hero",
             },
         )
+
+
+def test_create_non_unique_entity_error(connection):
+    data = {
+        "asset_type": "Character",
+        "name": "The Hero",
+        "code": "the_hero",
+        "project": {"code": "test", "id": 1, "type": "Project"},
+    }
+
+    connection.create("Asset", data)
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot create 'Asset' entity because its identifier field values are not unique: asset_type, code, name, project",
+    ):
+        connection.create("Asset", data)
+
+
+def test_create_non_unique_entity(connection):
+    data = {
+        "subject": "Hello, world!",
+        "body": "The quick brown fox jumped over the lazy dog.",
+    }
+
+    a = connection.create("Note", data)
+    b = connection.create("Note", data)
+
+    assert a is not None
+    assert b is not None
+    assert a["id"] != b["id"]
 
 
 def test_create(connection):
