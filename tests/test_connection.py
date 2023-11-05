@@ -7,7 +7,10 @@ from tinysg import Connection
 
 
 def test_connection_init_file_not_found_error():
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(
+        FileNotFoundError,
+        match="Given path .* does not exist!",
+    ):
         Connection("/path/to/nothing")
 
 

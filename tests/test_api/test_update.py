@@ -16,49 +16,73 @@ def connection(fs, test_data):
 
 
 def test_update_invalid_entity_type_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.update("InvalidEntityType", -1, {})
 
 
 def test_update_invalid_entity_id_error(connection):
-    with pytest.raises(EntityNotFound):
+    with pytest.raises(
+        EntityNotFound,
+        match="A\(n\) 'Asset' entity for id -1 does not exist.",
+    ):
         connection.update("Asset", -1, {})
 
 
 def test_update_invalid_field_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="The 'Asset' schema has no 'InvalidField' field.",
+    ):
         connection.update("Asset", 1, {"InvalidField": None})
 
 
-def test_update_invalidate_field_value_error(connection):
+def test_update_invalid_field_value_error(connection):
     data = {
         "asset_type": "Villain",
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Enum field 'Asset.asset_type' expects 'Character, Prop, Set', got 'Villain'.",
+    ):
         connection.update("Asset", 1, data)
 
 
 @pytest.mark.parametrize(
-    "data",
+    "data,error_msg",
     (
-        {"project": {"id": 99, "type": "Project"}},
-        {"shots": [{"type": "Shot", "id": 42}]},
+        (
+            {"project": {"id": 99, "type": "Project"}},
+            "Cannot link 'Project' to 'Sequence.project' because they do not exist: 99",
+        ),
+        (
+            {"shots": [{"type": "Shot", "id": 42}]},
+            "Cannot link 'Shot' to 'Sequence.shots' because they do not exist: 42",
+        ),
     ),
     ids=["entity field", "multi-entity field"],
 )
-def test_update_invalid_entity_field_value_error(connection, data):
-    with pytest.raises(EntityNotFound):
+def test_update_invalid_entity_field_value_error(connection, data, error_msg):
+    with pytest.raises(EntityNotFound, match=error_msg):
         connection.update("Sequence", 1, data)
 
 
 def test_update_invalid_multi_entity_update_mode_error(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Invalid update mode 'update' for multi-entity field 'Sequence.shots' - expected add, remove, set.",
+    ):
         connection.update("Sequence", 1, {}, {"shots": "update"})
 
 
 def test_update_invalid_field_multi_entity_update_mode_error(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="'Sequence.project' is not a multi-entity field.",
+    ):
         connection.update("Sequence", 1, {}, {"project": "add"})
 
 

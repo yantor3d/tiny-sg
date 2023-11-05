@@ -20,23 +20,32 @@ def connection(fs, test_data):
 
 
 @pytest.mark.parametrize(
-    "filter_spec",
+    "filter_spec,error_msg",
     [
-        ["field", "has", "value"],
-        ["field", "is"],
+        (["field", "has", "value"], "Invalid filter operator: 'has' - expected: .*"),
+        (
+            ["field", "is"],
+            "Invalid filter spec \['field', 'is'\] - expected \[field, operator, value\(s\)\]",
+        ),
     ],
     ids=[
         "Invalid operator",
         "Incomplete spec",
     ],
 )
-def test_get_invalid_filter(connection, filter_spec):
-    with pytest.raises(FilterSpecError):
+def test_get_invalid_filter(connection, filter_spec, error_msg):
+    with pytest.raises(
+        FilterSpecError,
+        match=error_msg,
+    ):
         connection._filter_to_query(filter_spec)
 
 
 def test_parse_deep_field_invalid_spec_error():
-    with pytest.raises(FilterSpecError):
+    with pytest.raises(
+        FilterSpecError,
+        match="Deep field must have at least three values.",
+    ):
         tinysg.fields.parse_deep_field("field.Entity")
 
 
@@ -130,8 +139,11 @@ def test_in_calendar(connection, filter_value, pos_value, neg_value, mock_today)
 
 
 def test_in_calendar_invalid_unit(connection):
-    with pytest.raises(ValueError):
-        query = connection._filter_to_query(["field", "in_calendar", 1, "COW"])
+    with pytest.raises(
+        ValueError,
+        match="Invalidate unit: 'COWS' - expected .*",
+    ):
+        query = connection._filter_to_query(["field", "in_calendar", 1, "COWS"])
         query({"field": tinysg.utils.today()})
 
 
@@ -179,13 +191,20 @@ def test_in_last(connection, filter_value, value, expected, mock_today):
 
 
 def test_in_last_invalid_unit(connection):
-    with pytest.raises(ValueError):
-        query = connection._filter_to_query(["field", "in_last", 1, "COW"])
+    with pytest.raises(
+        ValueError,
+        match="Invalidate unit: 'COWS' - expected .*",
+    ):
+
+        query = connection._filter_to_query(["field", "in_last", 1, "COWS"])
         query({"field": tinysg.utils.today()})
 
 
 def test_in_last_invalid_value(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Number of days must be greater than zero.",
+    ):
         query = connection._filter_to_query(["field", "in_last", -1, "DAY"])
         query({"field": tinysg.utils.today()})
 
@@ -234,13 +253,19 @@ def test_in_next(connection, filter_value, value, expected, mock_today):
 
 
 def test_in_next_invalid_unit(connection):
-    with pytest.raises(ValueError):
-        query = connection._filter_to_query(["field", "in_next", 1, "COW"])
+    with pytest.raises(
+        ValueError,
+        match="Invalidate unit: 'COWS' - expected .*",
+    ):
+        query = connection._filter_to_query(["field", "in_next", 1, "COWS"])
         query({"field": tinysg.utils.today()})
 
 
 def test_in_next_invalid_value(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Number of days must be greater than zero.",
+    ):
         query = connection._filter_to_query(["field", "in_next", -1, "DAY"])
         query({"field": tinysg.utils.today()})
 

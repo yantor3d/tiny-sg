@@ -17,12 +17,18 @@ def connection(fs, test_data):
 
 
 def test_delete_invalid_entity_type_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.delete("InvalidEntityType", 1)
 
 
 def test_delete_invalid_entity_id_error(connection):
-    with pytest.raises(EntityNotFound):
+    with pytest.raises(
+        EntityNotFound,
+        match="A\(n\) 'Asset' entity for id -1 does not exist",
+    ):
         connection.delete("Asset", -1)
 
 

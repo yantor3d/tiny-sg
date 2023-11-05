@@ -28,5 +28,8 @@ def test_schema_entity_create(connection):
 
 
 def test_schema_entity_create_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'Asset' entity has already been registered.",
+    ):
         connection.schema_entity_create("Asset")

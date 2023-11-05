@@ -17,12 +17,18 @@ def connection(fs, test_data):
 
 
 def test_revive_invalid_entity_type_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.revive("InvalidEntityType", 1)
 
 
 def test_revive_invalid_entity_id_error(connection):
-    with pytest.raises(EntityNotFound):
+    with pytest.raises(
+        EntityNotFound,
+        match="A\(n\) 'Asset' entity for id -1 does not exist.",
+    ):
         connection.revive("Asset", -1)
 
 

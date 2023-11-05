@@ -4,7 +4,7 @@ import json
 import pytest
 
 from tinysg import Connection
-from tinysg.exceptions import FilterSpecError, SchemaError
+from tinysg.exceptions import FilterSpecError
 
 
 @pytest.fixture(scope="function")
@@ -15,7 +15,10 @@ def connection(fs, test_data):
 
 
 def test_resolve_link_invalid_filter_spec(connection):
-    with pytest.raises(FilterSpecError):
+    with pytest.raises(
+        FilterSpecError,
+        match="Invalid filter spec \['sequence.Sequence', \{'type': 'Sequence', 'id': 1\}\] - expected \[field, operator, value\(s\)\]",
+    ):
         connection._resolve_filters(
             "Shot",
             [

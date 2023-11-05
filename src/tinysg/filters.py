@@ -26,6 +26,17 @@ class CalendarUnits(Enum):
     WEEK = "WEEK"
     YEAR = "YEAR"
 
+    @classmethod
+    def values(cls):
+        """Return the enum values."""
+
+        return [
+            cls.DAY.value,
+            cls.MONTH.value,
+            cls.WEEK.value,
+            cls.YEAR.value,
+        ]
+
 
 class FilterOperator(Enum):
     """Filter operator enums."""
@@ -124,7 +135,7 @@ def get(filter_op) -> Callable:
     except KeyError:
         filter_ops_list = ", ".join(FILTER_OPERATORS.keys())
         raise FilterSpecError(
-            f"Invalid filter operator: '{filter_op} - expected: {filter_ops_list}."
+            f"Invalid filter operator: '{filter_op}' - expected: {filter_ops_list}."
         )
 
 
@@ -205,7 +216,9 @@ def in_calendar(value: DateOrDateTime, n: int, unit: str) -> bool:
     try:
         return getattr(delta, unit.lower() + "s") == n
     except AttributeError:
-        raise ValueError(unit)
+        raise ValueError(
+            f"Invalidate unit: '{unit}' - expected {', '.join(CalendarUnits.values())}."
+        )
 
 
 @register(
@@ -229,7 +242,7 @@ def in_last(value: DateOrDateTime, n: int, unit: str) -> bool:
     """
 
     if n < 0:
-        raise ValueError("Number of {unit.lower()}s must be greater than zero.")
+        raise ValueError(f"Number of {unit.lower()}s must be greater than zero.")
 
     today = tinysg.utils.today()
     key = unit.lower() + "s"
@@ -237,7 +250,9 @@ def in_last(value: DateOrDateTime, n: int, unit: str) -> bool:
     try:
         delta = dateutil.relativedelta.relativedelta(**{key: n})
     except TypeError:
-        raise ValueError("Unknown unit of time: {unit}")
+        raise ValueError(
+            f"Invalidate unit: '{unit}' - expected HOUR, {', '.join(CalendarUnits.values())}."
+        )
 
     return today - delta <= value <= today
 
@@ -263,7 +278,7 @@ def in_next(value: Union[datetime.date, datetime.datetime], n: int, unit: str) -
     """
 
     if n < 0:
-        raise ValueError("Number of {unit.lower()}s must be greater than zero.")
+        raise ValueError(f"Number of {unit.lower()}s must be greater than zero.")
 
     today = tinysg.utils.today()
     key = unit.lower() + "s"
@@ -271,7 +286,9 @@ def in_next(value: Union[datetime.date, datetime.datetime], n: int, unit: str) -
     try:
         delta = dateutil.relativedelta.relativedelta(**{key: n})
     except TypeError:
-        raise ValueError("Unknown unit of time: {unit}")
+        raise ValueError(
+            f"Invalidate unit: '{unit}' - expected HOUR, {', '.join(CalendarUnits.values())}."
+        )
 
     return today <= value <= today + delta
 

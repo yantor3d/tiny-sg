@@ -124,9 +124,7 @@ class Connection(object):
         retire_entity = self.__get_entity_raw(entity_type, entity_id, retired=True) or None
 
         if active_entity is None and retire_entity is None:
-            raise EntityNotFound(
-                "A(n) 'f{entity_type}' entity for id f{entity_id} does not exist."
-            )
+            raise EntityNotFound(f"A(n) '{entity_type}' entity for id {entity_id} does not exist.")
         elif active_entity is not None:
             entity = self.__get_entity_raw(entity_type, entity_id, retired=False)
             entity_view = dict(entity)
@@ -239,9 +237,7 @@ class Connection(object):
         retire_entity = self.__get_entity_raw(entity_type, entity_id, retired=True) or None
 
         if active_entity is None and retire_entity is None:
-            raise EntityNotFound(
-                "A(n) 'f{entity_type}' entity for id f{entity_id} does not exist."
-            )
+            raise EntityNotFound(f"A(n) '{entity_type}' entity for id {entity_id} does not exist.")
         elif active_entity is not None:
             result = False
         elif retire_entity is not None:
@@ -312,9 +308,7 @@ class Connection(object):
         entity = table.get(doc_id=entity_id)
 
         if entity is None:
-            raise EntityNotFound(
-                "A(n) 'f{entity_type}' entity for id f{entity_id} does not exist."
-            )
+            raise EntityNotFound(f"A(n) '{entity_type}' entity for id {entity_id} does not exist.")
 
         # __get_entity_payload drops nulls - update the original data to preserve them
         payload = dict(data)
@@ -589,7 +583,7 @@ class Connection(object):
 
                 if not tinysg.fields.is_link(field_schema):
                     raise FilterSpecError(
-                        f"Cannot do deep filter on non-link field {entity_type}.{entity_field}"
+                        f"Cannot do deep filter on non-link field '{entity_type}.{entity_field}'."
                     )
 
                 link_filters[entity_field].append([link_field, filter_op, *filter_value])
@@ -846,7 +840,7 @@ class Connection(object):
 
         for field_name, value in data.items():
             if field_name not in fields_map:
-                raise SchemaError(f"The '{entity_type} schema has no '{field_name}', field.")
+                raise SchemaError(f"The '{entity_type}' schema has no '{field_name}' field.")
 
             field = fields_map[field_name]
             value = tinysg.fields.handle_value(value, field)
@@ -878,7 +872,7 @@ class Connection(object):
             if missing_link_ids:
                 missing_link_ids_str = ", ".join(sorted(map(str, missing_link_ids)))
                 raise EntityNotFound(
-                    f"Cannot link '{link_type}' entities to '{entity_type}.{field_name}'"
+                    f"Cannot link '{link_type}' to '{entity_type}.{field_name}' "
                     f"because they do not exist: {missing_link_ids_str}"
                 )
 
@@ -954,7 +948,7 @@ class Connection(object):
 
             return self.schema_entity_read(entity_type)
         else:
-            raise SchemaError(f"A(n) '{entity_type} entity has already been registered.")
+            raise SchemaError(f"A(n) '{entity_type}' entity has already been registered.")
 
     def schema_entity_read(self, entity_type: str) -> dict:
         """Return the schema for the given entity type.
@@ -972,7 +966,7 @@ class Connection(object):
         result = self._db.table("_schema").get(where("entity_type") == entity_type)
 
         if result is None:
-            raise SchemaError(f"A(n) '{entity_type} entity has not been registered.")
+            raise SchemaError(f"A(n) '{entity_type}' entity has not been registered.")
         else:
             return dict(result)
 
@@ -1089,7 +1083,7 @@ class Connection(object):
         )
 
         if result is None:
-            raise SchemaError(f"Entity '{entity_type} has no '{field_name}' field.")
+            raise SchemaError(f"Entity '{entity_type}' has no '{field_name}' field.")
         else:
             return dict(result, id=result.doc_id)
 

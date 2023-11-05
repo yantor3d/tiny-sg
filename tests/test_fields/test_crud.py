@@ -23,7 +23,10 @@ def new_connection(fs):
 
 
 def test_schema_field_create_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'Asset.name' field already exists.",
+    ):
         connection.schema_field_create("Asset", "name", {})
 
 
@@ -172,5 +175,8 @@ def test_update_field_error(new_connection):
     connection.schema_entity_create(entity_type)
     connection.schema_field_create(entity_type, field_name, {"type": "date"})
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Default value for a 'date' field must be True/False",
+    ):
         connection.schema_field_update(entity_type, field_name, {"default": "this_week"})

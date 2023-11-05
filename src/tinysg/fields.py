@@ -283,7 +283,7 @@ def _handle_entity(value, field_spec):
         elif value["type"] not in field_spec["link"]:
             raise ValueError(
                 f"Field '{field_spec['entity_type']}.{field_spec['name']}' expects a "
-                f"'{field_spec['link']}' entity, got {value['type']}."
+                f"'{', '.join(field_spec['link'])}' entity, got '{value['type']}'."
             )
         else:
             value = {
@@ -309,7 +309,7 @@ def _handle_enum(value, field_spec):
         enum_values_str = ", ".join(enum_values)
 
         raise ValueError(
-            f"Enum field '{field_spec['entity_type']}.{field_spec['name']}' expects a "
+            f"Enum field '{field_spec['entity_type']}.{field_spec['name']}' expects "
             f"'{enum_values_str}', got '{value}'."
         )
 

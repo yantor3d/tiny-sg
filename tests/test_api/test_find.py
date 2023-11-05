@@ -15,10 +15,16 @@ def connection(fs, test_data):
 
 
 def test_find_invalid_entity_type(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.find_one("InvalidEntityType", [])
 
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.find_one("Asset", [["shots.InvalidEntityType.code", "is", 1]])
 
 
@@ -74,13 +80,22 @@ def test_find_all_no_filters(connection):
 
 
 def test_find_all_invalid_field(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="Entity 'Asset' has no 'foobar' field.",
+    ):
         connection.find_all("Asset", [["foobar", "is", 1]])
 
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="Entity 'Shot' has no 'foobar' field.",
+    ):
         connection.find_all("Asset", [["shots.Shot.foobar", "is", 1]])
 
-    with pytest.raises(FilterSpecError):
+    with pytest.raises(
+        FilterSpecError,
+        match="Cannot do deep filter on non-link field 'Asset.asset_type'.",
+    ):
         connection.find_all("Asset", [["asset_type.Shot.foobar", "is", 1]])
 
 

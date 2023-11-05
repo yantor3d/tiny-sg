@@ -16,17 +16,26 @@ def connection(fs, test_data):
 
 
 def test_create_invalid_entity_type_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidEntityType' entity has not been registered.",
+    ):
         connection.create("InvalidEntityType", {})
 
 
 def test_create_invalid_field_error(connection):
-    with pytest.raises(SchemaError):
+    with pytest.raises(
+        SchemaError,
+        match="The 'Asset' schema has no 'InvalidField' field.",
+    ):
         connection.create("Asset", {"InvalidField": None})
 
 
 def test_create_invalidate_field_value_error(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Enum field 'Asset.asset_type' expects a 'Character, Prop, Set', got 'Villain'.",
+    ):
         connection.create(
             "Asset",
             {
@@ -37,7 +46,10 @@ def test_create_invalidate_field_value_error(connection):
 
 
 def test_create_invalidate_entity_field_type_error(connection):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Field 'Asset.project' expects a 'Project' entity, got 'Sequence'.",
+    ):
         connection.create(
             "Asset",
             {
@@ -49,7 +61,10 @@ def test_create_invalidate_entity_field_type_error(connection):
 
 
 def test_create_invalidate_entity_field_value_error(connection):
-    with pytest.raises(EntityNotFound):
+    with pytest.raises(
+        EntityNotFound,
+        match="Cannot link 'Project' to 'Asset.project' because they do not exist: 99",
+    ):
         connection.create(
             "Asset",
             {
@@ -59,7 +74,10 @@ def test_create_invalidate_entity_field_value_error(connection):
             },
         )
 
-    with pytest.raises(EntityNotFound):
+    with pytest.raises(
+        EntityNotFound,
+        match="Cannot link 'Shot' to 'Sequence.shots' because they do not exist: 42",
+    ):
         connection.create(
             "Sequence",
             {
