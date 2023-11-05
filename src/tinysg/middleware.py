@@ -5,6 +5,7 @@ import frozendict
 import operator
 
 from tinydb.middlewares import CachingMiddleware, Middleware
+from typing import Tuple
 
 
 class ReadCachingMiddleware(CachingMiddleware):
@@ -98,9 +99,11 @@ class PivotTableMiddleware(Middleware):
 
         linked_entity_list = collections.defaultdict(list)
 
+        this_key, link_key = self._link_keys(field)
+
         for link in link_entity_table.values():
-            this_entity_id = int(link[this_entity_type])
-            link_entity_id = int(link[link_entity_type])
+            this_entity_id = int(link[this_key])
+            link_entity_id = int(link[link_key])
 
             link_entity = {"type": link_entity_type, "id": link_entity_id}
 
@@ -118,6 +121,16 @@ class PivotTableMiddleware(Middleware):
                 entity[field["name"]] = next(iter(links), None)
             else:
                 entity[field["name"]] = links
+
+    def _link_keys(self, field: dict) -> Tuple[str, str]:
+        this_key = "{entity_type}.{name}".format(**field)
+
+        try:
+            link_key = "{link}.{link_field}".format(**field)
+        except KeyError:
+            link_key = field["link"]
+
+        return this_key, link_key
 
     def write(self, data):
         """Write the database.
@@ -158,6 +171,8 @@ class PivotTableMiddleware(Middleware):
                     continue
 
                 for field in link_fields:
+                    this_key, link_key = self._link_keys(field)
+
                     if field["type"] == "entity":
                         links = [entity.get(field["name"])]
                     elif field["type"] == "multi_entity":
@@ -167,7 +182,7 @@ class PivotTableMiddleware(Middleware):
 
                     for link in links:
                         link_dict = frozendict.frozendict(
-                            {link["type"]: link["id"], entity["type"]: entity["id"]}
+                            {link_key: link["id"], this_key: entity["id"]}
                         )
 
                         link_tables[field["table"]].add(link_dict)

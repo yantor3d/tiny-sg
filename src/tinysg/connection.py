@@ -408,7 +408,9 @@ class Connection(object):
         entity = tinysg.entity.as_handle(entity)
 
         reverse_fields = self._db.table("_fields").search(
-            (where("table") == field["table"]) & (where("link") == entity["type"])
+            (where("table") == field["table"])
+            & (where("link") == entity["type"])
+            & (where("name") != field_name)
         )
 
         for reverse_field in reverse_fields:

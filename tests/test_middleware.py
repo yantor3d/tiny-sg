@@ -24,19 +24,25 @@ def test_middleware_read(db):
 
         table = data.get(entity_type, {})
 
-        fields = ["id", "type"]
+        link_fields = set()
 
         for field in entity_info["fields"]:
-            if "table" in field:
-                fields.append(field["name"])
+            if "table" not in field:
+                continue
 
-        errant_fields = set()
+            link_table = data.get(field["table"])
+
+            if not link_table:
+                continue
+
+            link_fields.add(field["name"])
+
+        entity_fields = set()
 
         for __, entity in table.items():
-            for field in fields:
-                if field not in entity:
-                    errant_fields.add(field)
+            entity_fields.update(set(entity))
 
+        errant_fields = link_fields - entity_fields
         errant_fields_str = ",".join(sorted(errant_fields))
 
         assert not errant_fields, f"{entity_type} is missing {errant_fields_str}"

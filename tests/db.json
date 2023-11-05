@@ -4,21 +4,23 @@
         "2": {"entity_type": "Project", "name": "name", "type": "text", "required": true},
         "3": {"entity_type": "Sequence", "name": "code", "type": "text", "required": true},
         "4": {"entity_type": "Sequence", "name": "number", "type": "text", "required": true, "identifier": true},
-        "5": {"entity_type": "Sequence", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Sequence.project", "required": true, "identifier": true},
-        "6": {"entity_type": "Sequence", "name": "shots", "type": "multi_entity", "link": "Shot", "table":  "Connection:Shot.sequence-Sequence.shots"},
+        "5": {"entity_type": "Sequence", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Sequence.project-Project", "required": true, "identifier": true},
+        "6": {"entity_type": "Sequence", "name": "shots", "type": "multi_entity", "link": "Shot", "link_field": "sequence", "table":  "Connection:Shot.sequence-Sequence.shots"},
         "7": {"entity_type": "Shot", "name": "code", "type": "text", "required": true},
         "8": {"entity_type": "Shot", "name": "number", "type": "text", "required": true, "identifier": true},
-        "9": {"entity_type": "Shot", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Shot.project", "required": true, "identifier": true},
-        "10": {"entity_type": "Shot", "name": "sequence", "type": "entity", "link": "Sequence", "table":  "Connection:Shot.sequence-Sequence.shots", "required": true, "identifier": true},
-        "11": {"entity_type": "Shot", "name": "assets", "type": "multi_entity", "link": "Asset", "table":  "Connection:Asset.shots-Shot.asset"},
+        "9": {"entity_type": "Shot", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Shot.project-Project", "required": true, "identifier": true},
+        "10": {"entity_type": "Shot", "name": "sequence", "type": "entity", "link": "Sequence", "link_field": "shots", "table":  "Connection:Shot.sequence-Sequence.shots", "required": true, "identifier": true},
+        "11": {"entity_type": "Shot", "name": "assets", "type": "multi_entity", "link": "Asset", "link_field": "shots", "table":  "Connection:Asset.shots-Shot.assets"},
         "12": {"entity_type": "Asset", "name": "code", "type": "text", "required": true, "identifier": true},
         "13": {"entity_type": "Asset", "name": "name", "type": "text", "required": true, "identifier": true},
         "14": {"entity_type": "Asset", "name": "asset_type", "type": "enum", "values": ["Character", "Prop", "Set"], "required": true, "identifier": true},
-        "15": {"entity_type": "Asset", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Asset.project", "required": true, "identifier": true},
-        "16": {"entity_type": "Asset", "name": "shots", "type": "multi_entity", "link": "Shot", "table":  "Connection:Asset.shots-Shot.asset"},
+        "15": {"entity_type": "Asset", "name": "project", "type": "entity", "link": "Project", "table":  "Connection:Asset.project-Project", "required": true, "identifier": true},
+        "16": {"entity_type": "Asset", "name": "shots", "type": "multi_entity", "link": "Shot", "link_field": "assets", "table":  "Connection:Asset.shots-Shot.assets"},
         "17": {"entity_type": "Asset", "name": "status", "type": "enum", "values": ["Active", "Omit"]},
-        "18": {"entity_type": "Note", "name": "subject", "type": "text", "required": true},
-        "19": {"entity_type": "Note", "name": "body", "type": "text", "required": true}
+        "18": {"entity_type": "Asset", "name": "parent", "type": "entity", "link": "Asset", "link_field": "children", "table": "Connection:Asset.parent-Asset.children"},
+        "19": {"entity_type": "Asset", "name": "children", "type": "multi_entity", "link": "Asset", "link_field": "parent", "table": "Connection:Asset.parent-Asset.children"},
+        "20": {"entity_type": "Note", "name": "subject", "type": "text", "required": true},
+        "21": {"entity_type": "Note", "name": "body", "type": "text", "required": true}
     },
     "_schema": {
         "1": {
@@ -59,31 +61,34 @@
         "2": {"code": "0100.0020", "number": "0020"},
         "3": {"code": "0200.0010", "number": "0010"}
     },
-    "Connection:Asset.project": {
-        "1": {"Asset": 1, "Project": 1},
-        "2": {"Asset": 2, "Project": 1},
-        "3": {"Asset": 3, "Project": 1}
+    "Connection:Asset.project-Project": {
+        "1": {"Asset.project": 1, "Project": 1},
+        "2": {"Asset.project": 2, "Project": 1},
+        "3": {"Asset.project": 3, "Project": 1}
     },
-    "Connection:Shot.project": {
-        "1": {"Shot": 1, "Project": 1},
-        "2": {"Shot": 2, "Project": 1},
-        "3": {"Shot": 3, "Project": 1}
+    "Connection:Shot.project-Project": {
+        "1": {"Shot.project": 1, "Project": 1},
+        "2": {"Shot.project": 2, "Project": 1},
+        "3": {"Shot.project": 3, "Project": 1}
     },
-    "Connection:Sequence.project": {
-        "1": {"Sequence": 1, "Project": 1},
-        "2": {"Sequence": 2, "Project": 1}
+    "Connection:Sequence.project-Project": {
+        "1": {"Sequence.project": 1, "Project": 1},
+        "2": {"Sequence.project": 2, "Project": 1}
     },
     "Connection:Shot.sequence-Sequence.shots": {
-        "1": {"Shot": 1, "Sequence": 1},
-        "2": {"Shot": 2, "Sequence": 1},
-        "3": {"Shot": 3, "Sequence": 2}
+        "1": {"Shot.sequence": 1, "Sequence.shots": 1},
+        "2": {"Shot.sequence": 2, "Sequence.shots": 1},
+        "3": {"Shot.sequence": 3, "Sequence.shots": 2}
     },
-    "Connection:Asset.shots-Shot.asset": {
-        "1": {"Shot": 1, "Asset": 1},
-        "2": {"Shot": 1, "Asset": 3},
-        "3": {"Shot": 2, "Asset": 2},
-        "4": {"Shot": 3, "Asset": 1},
-        "5": {"Shot": 3, "Asset": 2},
-        "6": {"Shot": 3, "Asset": 3}
+    "Connection:Asset.shots-Shot.assets": {
+        "1": {"Shot.assets": 1, "Asset.shots": 1},
+        "2": {"Shot.assets": 1, "Asset.shots": 3},
+        "3": {"Shot.assets": 2, "Asset.shots": 2},
+        "4": {"Shot.assets": 3, "Asset.shots": 1},
+        "5": {"Shot.assets": 3, "Asset.shots": 2},
+        "6": {"Shot.assets": 3, "Asset.shots": 3}
+    },
+    "Connection:Asset.parent-Asset.children": {
+        "1": {"Asset.parent": 3, "Asset.children": 1}
     }
 }
