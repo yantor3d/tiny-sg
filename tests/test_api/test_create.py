@@ -34,7 +34,7 @@ def test_create_invalid_field_error(connection):
 def test_create_invalidate_field_value_error(connection):
     with pytest.raises(
         ValueError,
-        match="Enum field 'Asset.asset_type' expects a 'Character, Prop, Set', got 'Villain'.",
+        match="Enum field 'Asset.asset_type' expects 'Character, Prop, Set', got 'Villain'.",
     ):
         connection.create(
             "Asset",

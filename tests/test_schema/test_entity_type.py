@@ -33,3 +33,27 @@ def test_schema_entity_create_error(connection):
         match="A\(n\) 'Asset' entity has already been registered.",
     ):
         connection.schema_entity_create("Asset")
+
+
+def test_schema_entity_delete(connection):
+    assert connection.schema_entity_check("Asset")
+
+    task_link_field = connection.schema_field_read("Task", "link")
+    assert sorted(task_link_field["link"]) == ["Asset", "Shot"]
+
+    connection.schema_entity_delete("Asset")
+
+    assert not connection.schema_entity_check("Asset")
+    assert not connection.schema_field_check("Shot", "assets")
+
+    task_link_field = connection.schema_field_read("Task", "link")
+
+    assert task_link_field["link"] == ["Shot"]
+
+
+def test_schema_entity_delete_error(connection):
+    with pytest.raises(
+        SchemaError,
+        match="A\(n\) 'InvalidType' entity has not been registered.",
+    ):
+        connection.schema_entity_delete("InvalidType")

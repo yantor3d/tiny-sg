@@ -43,6 +43,19 @@ def now() -> datetime.datetime:
     return datetime.datetime.now()
 
 
+def reindex(table: Dict[str, str]) -> Dict[str, str]:
+    """Re-index the given table so its keys are contiguous.
+
+    Args:
+        table (dict): An entity table; keys are assumed to be numbers.
+
+    Returns:
+        dict
+    """
+
+    return {str(i): value for i, (__, value) in enumerate(sorted(table.items()), 1)}
+
+
 def today() -> datetime.date:
     """Return today's date."""
 

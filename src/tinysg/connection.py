@@ -149,11 +149,12 @@ class Connection(object):
             self.__set_entity_raw(entity_type, entity_id, {}, retired=False)
             self.__set_entity_raw(entity_type, entity_id, dict(entity), retired=True)
 
-            self._db.storage.flush()
-
             result = True
         elif retire_entity is not None:
             result = False
+
+        if result:
+            self._db.storage.flush()
 
         return result
 
@@ -949,6 +950,82 @@ class Connection(object):
             return self.schema_entity_read(entity_type)
         else:
             raise SchemaError(f"A(n) '{entity_type}' entity has already been registered.")
+
+    def schema_entity_delete(self, entity_type: str) -> dict:
+        """Remove the given entity type from the schema.
+
+        Args:
+            entity_type (str): Name of the entity type to delete.
+
+        Raises:
+            tinysg.exceptions.SchemaError: If the given entity schema does not exist.
+        """
+
+        self.schema_entity_read(entity_type)
+
+        # tinydb .remove and .update operations write to disk, so we  manipulate the data directly.
+        # we might be able to get around this with a 'transaction' context in the middleware,
+        # which we will need anyway to implement the 'batch' method.
+        self.__delete_entity_links(entity_type)
+        self.__delete_entity_fields(entity_type)
+        self._db.drop_table(entity_type)
+
+    def __delete_entity_links(self, entity_type: str):
+        """Delete links to the given entity type.
+
+        Args:
+            entity_type (str): Entity type to break the links to.
+        """
+
+        old = self.__tables["_schema"]
+        new = {}
+
+        for key, schema in old.items():
+            if schema["entity_type"] == entity_type:
+                continue
+
+            fields = [
+                field for field in schema["fields"] if field["type"] in ["entity", "multi_entity"]
+            ]
+            fields = [field for field in fields if entity_type in field["link"]]
+
+            if not fields:
+                continue
+
+            table = self.__tables[schema["entity_type"]]
+
+            for entity in table.values():
+                for field in fields:
+                    if field["type"] == "entity":
+                        value = entity.get(field["name"])
+
+                        if (value is not None) and (value["type"] == entity_type):
+                            entity.pop(field["name"], None)
+                    elif field["type"] == "multi_entity":
+                        entity.pop(field["name"], None)
+
+            new[key] = schema
+
+        self.__tables["_schema"] = tinysg.utils.reindex(new)
+
+    def __delete_entity_fields(self, entity_type):
+        old = self.__tables["_fields"]
+        new = {}
+
+        for key, field in old.items():
+            if field["entity_type"] == entity_type:
+                continue
+
+            if field["type"] in ["entity", "multi_entity"]:
+                if [entity_type] == field["link"]:
+                    continue
+
+                if entity_type in field["link"]:
+                    field["link"].remove(entity_type)
+
+            new[key] = field
+
+        self.__tables["_fields"] = tinysg.utils.reindex(new)
 
     def schema_entity_read(self, entity_type: str) -> dict:
         """Return the schema for the given entity type.
