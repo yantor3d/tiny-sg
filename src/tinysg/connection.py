@@ -407,13 +407,7 @@ class Connection(object):
 
         entity = tinysg.entity.as_handle(entity)
 
-        reverse_fields = self._db.table("_fields").search(
-            (where("table") == field["table"])
-            & (where("link") == entity["type"])
-            & (where("name") != field_name)
-        )
-
-        for reverse_field in reverse_fields:
+        for reverse_field in self.__reverse_fields(field):
             field_name = reverse_field["name"]
 
             old_links = [old_value] if old_value else []
@@ -456,11 +450,7 @@ class Connection(object):
         old_links_map = tinysg.utils.group_by_type(old_values)
         new_links_map = tinysg.utils.group_by_type(new_values)
 
-        reverse_fields = self._db.table("_fields").search(
-            (where("table") == field["table"]) & (where("link") == entity["type"])
-        )
-
-        for reverse_field in reverse_fields:
+        for reverse_field in self.__reverse_fields(field):
             field_name = reverse_field["name"]
             entity_type = reverse_field["entity_type"]
 
@@ -468,6 +458,15 @@ class Connection(object):
             new_links = new_links_map.get(entity_type, [])
 
             self.__unlink_entity_from(entity, reverse_field, old_links, new_links)
+
+    def __reverse_fields(self, field: dict) -> List[dict]:
+        """Return the reverse fields for the given field."""
+
+        return self._db.table("_fields").search(
+            (where("table") == field["table"])
+            & (where("link").any([field["entity_type"]]))
+            & (where("name") != field["name"])
+        )
 
     def __unlink_entity_from(
         self, entity: dict, reverse_field: dict, old_links: List[dict], new_links: List[dict]
@@ -861,17 +860,25 @@ class Connection(object):
                     linked_entities[field["name"]] = value
 
         for field_name, links in sorted(linked_entities.items()):
+            if not links:
+                continue
+
             field = fields_map[field_name]
+
+            # multi-entity fields cannot be polymorphic,
+            # and entity fields can only connect to one entity,
+            # so all linked entities will have the same type.
+            (link_type,) = {link["type"] for link in links}
             link_ids = {link["id"] for link in links}
 
-            links = self._db.table(field["link"]).get(doc_ids=list(link_ids))
+            links = self._db.table(link_type).get(doc_ids=list(link_ids))
 
             missing_link_ids = link_ids - {link.doc_id for link in links}
 
             if missing_link_ids:
                 missing_link_ids_str = ", ".join(sorted(map(str, missing_link_ids)))
                 raise EntityNotFound(
-                    f"Cannot link '{field['link']}' entities to '{entity_type}.{field_name}'"
+                    f"Cannot link '{link_type}' entities to '{entity_type}.{field_name}'"
                     f"because they do not exist: {missing_link_ids_str}"
                 )
 
@@ -1019,7 +1026,8 @@ class Connection(object):
         except SchemaError:
             self.schema_entity_read(entity_type)
 
-            tinysg.fields.validate_spec(field_name, properties)
+            tinysg.fields.validate_spec(properties)
+            tinysg.fields.conform_spec(properties)
 
             # TODO: Verify link entity exists
             # TODO: Create/update link entity table
@@ -1135,7 +1143,7 @@ class Connection(object):
         new = dict(old)
         new.update(properties)
 
-        tinysg.fields.validate_spec(field_name, new)
+        tinysg.fields.validate_spec(new)
 
         self._db.table("_fields").update(
             tinysg.operations.replace(new),

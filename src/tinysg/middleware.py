@@ -99,15 +99,20 @@ class PivotTableMiddleware(Middleware):
 
         linked_entity_list = collections.defaultdict(list)
 
-        this_key, link_key = self._link_keys(field)
+        this_key = self._this_key(field)
+        link_keys = self._link_keys(field)
 
         for link in link_entity_table.values():
             this_entity_id = int(link[this_key])
-            link_entity_id = int(link[link_key])
 
-            link_entity = {"type": link_entity_type, "id": link_entity_id}
-
-            linked_entity_list[this_entity_id].append(link_entity)
+            for link_entity_type, link_key in link_keys.items():
+                try:
+                    link_entity_id = int(link[link_key])
+                except KeyError:
+                    continue
+                else:
+                    link_entity = {"type": link_entity_type, "id": link_entity_id}
+                    linked_entity_list[this_entity_id].append(link_entity)
 
         for entity_id, entity in this_entity_table.items():
             links = linked_entity_list.get(int(entity_id))
@@ -122,15 +127,23 @@ class PivotTableMiddleware(Middleware):
             else:
                 entity[field["name"]] = links
 
+    def _this_key(self, field: dict) -> str:
+        return "{entity_type}.{name}".format(**field)
+
     def _link_keys(self, field: dict) -> Tuple[str, str]:
-        this_key = "{entity_type}.{name}".format(**field)
+        result = {}
 
-        try:
-            link_key = "{link}.{link_field}".format(**field)
-        except KeyError:
-            link_key = field["link"]
+        link_fields = field.get("link_field", {})
 
-        return this_key, link_key
+        for each in field["link"]:
+            try:
+                link_key = "{}.{}".format(each, link_fields[each])
+            except KeyError:
+                link_key = each
+
+            result[each] = link_key
+
+        return result
 
     def write(self, data):
         """Write the database.
@@ -171,7 +184,8 @@ class PivotTableMiddleware(Middleware):
                     continue
 
                 for field in link_fields:
-                    this_key, link_key = self._link_keys(field)
+                    this_key = self._this_key(field)
+                    link_keys = self._link_keys(field)
 
                     if field["type"] == "entity":
                         links = [entity.get(field["name"])]
@@ -181,6 +195,7 @@ class PivotTableMiddleware(Middleware):
                     links = [link for link in links if link]
 
                     for link in links:
+                        link_key = link_keys[link["type"]]
                         link_dict = frozendict.frozendict(
                             {link_key: link["id"], this_key: entity["id"]}
                         )

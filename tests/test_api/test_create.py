@@ -36,6 +36,18 @@ def test_create_invalidate_field_value_error(connection):
         )
 
 
+def test_create_invalidate_entity_field_type_error(connection):
+    with pytest.raises(ValueError):
+        connection.create(
+            "Asset",
+            {
+                "code": "The Hero of our Story",
+                "asset_type": "Character",
+                "project": {"type": "Sequence", "id": 1},
+            },
+        )
+
+
 def test_create_invalidate_entity_field_value_error(connection):
     with pytest.raises(EntityNotFound):
         connection.create(
@@ -91,12 +103,13 @@ def test_create_non_unique_entity_error(connection):
 
 def test_create_non_unique_entity(connection):
     data = {
-        "subject": "Hello, world!",
-        "body": "The quick brown fox jumped over the lazy dog.",
+        "name": "test",
+        "link": {"type": "Asset", "id": 1},
+        "project": {"type": "Project", "id": 1},
     }
 
-    a = connection.create("Note", data)
-    b = connection.create("Note", data)
+    a = connection.create("Task", data)
+    b = connection.create("Task", data)
 
     assert a is not None
     assert b is not None
@@ -135,3 +148,32 @@ def test_create(connection):
     )
 
     assert result is not None
+
+
+@pytest.mark.parametrize(
+    "link",
+    (
+        {"type": "Shot", "id": 1},
+        {"type": "Asset", "id": 1},
+    ),
+    ids=[
+        "Shot",
+        "Asset",
+    ],
+)
+def test_create_polymorphic_entity_field_value(connection, link):
+    result = connection.create(
+        "Task",
+        {
+            "name": "lookdev",
+            "link": link,
+            "project": {"code": "test", "id": 1, "type": "Project"},
+        },
+        [
+            "link",
+        ],
+    )
+
+    assert result["link"] is not None
+    assert result["link"]["type"] == link["type"]
+    assert result["link"]["id"] == link["id"]

@@ -38,8 +38,16 @@ def test_schema_field_create_error(connection):
             "project",
             {
                 "type": FieldType.ENTITY.value,
-                "link": "Project",
-                "table": "Connection:Task.project",
+                "link": ["Project"],
+                "table": "Connection:Note.project",
+            },
+        ),
+        (
+            "entity",
+            {
+                "type": FieldType.ENTITY.value,
+                "link": ["Asset", "Shot"],
+                "table": "Connection:Note.entity",
             },
         ),
         (
@@ -57,8 +65,16 @@ def test_schema_field_create_error(connection):
             "assignees",
             {
                 "type": FieldType.MULTI_ENTITY.value,
-                "link": "User",
-                "table": "Connection:Task.assignees",
+                "link": ["User"],
+                "table": "Connection:Note.assignees",
+            },
+        ),
+        (
+            "replies",
+            {
+                "type": FieldType.MULTI_ENTITY.value,
+                "link": ["Note"],
+                "table": "Connection:Note.replies",
             },
         ),
         ("story_points", {"type": FieldType.NUMBER.value}),
@@ -68,17 +84,19 @@ def test_schema_field_create_error(connection):
         "bool",
         "date",
         "datetime",
-        "entity",
+        "entity self",
+        "entity other",
         "enum",
         "float",
         "json",
-        "multi_entity",
+        "multi_entity other",
+        "multi_entity self",
         "number",
         "text",
     ],
 )
 def test_add_field(connection, field_name, properties):
-    entity_type = "Task"
+    entity_type = "Note"
 
     connection.schema_entity_create(entity_type)
     assert not connection.schema_field_check(entity_type, field_name)

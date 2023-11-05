@@ -14,11 +14,11 @@ from tinysg.fields import FieldType
         {"type": FieldType.BOOL.value},
         {"type": FieldType.DATE.value, "default": False},
         {"type": FieldType.DATE_TIME.value, "default": True},
-        {"type": FieldType.ENTITY.value, "link": "Shot"},
+        {"type": FieldType.ENTITY.value, "link": ["Shot"]},
         {"type": FieldType.ENUM.value, "default": "a", "values": ["a", "b", "c"]},
         {"type": FieldType.FLOAT.value},
         {"type": FieldType.JSON.value},
-        {"type": FieldType.MULTI_ENTITY.value, "link": "Shot"},
+        {"type": FieldType.MULTI_ENTITY.value, "link": ["Shot"]},
         {"type": FieldType.NUMBER.value},
         {"type": FieldType.TEXT.value},
         {"type": FieldType.TEXT_LIST.value},
@@ -38,7 +38,7 @@ from tinysg.fields import FieldType
     ],
 )
 def test_valid_field_spec(properties):
-    tinysg.fields.validate_spec("field_name", properties)
+    tinysg.fields.validate_spec(properties)
 
 
 @pytest.mark.parametrize(
@@ -52,7 +52,7 @@ def test_valid_field_spec(properties):
         {"type": FieldType.ENTITY.value},
         {
             "type": FieldType.ENTITY.value,
-            "link": "Shot",
+            "link": ["Shot"],
             "default": {"type": "Shot", "id": 1},
         },
         {"type": FieldType.ENUM.value},
@@ -62,7 +62,7 @@ def test_valid_field_spec(properties):
         {"type": FieldType.MULTI_ENTITY.value},
         {
             "type": FieldType.MULTI_ENTITY.value,
-            "link": "Shot",
+            "link": ["Shot"],
             "default": {"type": "Shot", "id": 1},
         },
         {"type": FieldType.NUMBER.value, "default": "x"},
@@ -90,4 +90,12 @@ def test_valid_field_spec(properties):
 )
 def test_invalid_field_spec(properties):
     with pytest.raises(ValueError):
-        tinysg.fields.validate_spec("field_name", properties)
+        tinysg.fields.validate_spec(properties)
+
+
+def test_conform_field_spec():
+    field_spec = {"type": FieldType.ENTITY.value, "link": "Shot"}
+
+    tinysg.fields.conform_spec(field_spec)
+
+    assert field_spec["link"] == ["Shot"]

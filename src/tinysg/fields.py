@@ -151,6 +151,58 @@ def is_multi_entity(field_schema: dict) -> bool:
     return field_schema["type"] == FieldType.MULTI_ENTITY.value
 
 
+def _field_type(field_spec: dict) -> str:
+    """Return the type of the given field.
+
+    Args:
+        field_spec (dict): Entity field spec.
+    Raises:
+        ValueError: If the type is not given.
+        ValueError: If the type is not valid.
+
+    Returns:
+        str
+    """
+
+    data_types = ", ".join([each.value for each in FieldType])
+
+    try:
+        data_type = field_spec["type"]
+    except KeyError:
+        raise ValueError(f"Field properties must include 'type' - {data_types}.")
+    else:
+        if data_type not in data_types:
+            raise ValueError(f"Invalid data type '{data_type}' - expected {data_types}.")
+
+    return data_type
+
+
+def conform_spec(field_spec):
+    """Conform the given field spec.
+
+    Args:
+        field_spec (dict): Entity field spec.
+    """
+
+    data_type = _field_type(field_spec)
+
+    try:
+        _CONFORM_FUNC[data_type](field_spec)
+    except KeyError:
+        pass
+
+
+def _conform_entity(properties):
+    """Conform the field properties for the given entity field.
+
+    Args:
+        properties (dict): Field spec.
+    """
+
+    if isinstance(properties["link"], str):
+        properties["link"] = [properties["link"]]
+
+
 def handle_value(value, field_spec):
     """Handle the value for the given field.
 
@@ -228,7 +280,7 @@ def _handle_entity(value, field_spec):
             result = False
         elif "type" not in value:
             result = False
-        elif value["type"] != field_spec["link"]:
+        elif value["type"] not in field_spec["link"]:
             raise ValueError(
                 f"Field '{field_spec['entity_type']}.{field_spec['name']}' expects a "
                 f"'{field_spec['link']}' entity, got {value['type']}."
@@ -387,25 +439,16 @@ def update_multi_entity_field(
     return result
 
 
-def validate_spec(field_name, properties):
+def validate_spec(field_spec):
     """Validate the given field spec.
 
     Args:
-        field_name (str): Name of the field.
-        properties (dict):
+        field_spec (dict): Entity field spec.
     """
 
-    data_types = ", ".join([each.value for each in FieldType])
+    data_type = _field_type(field_spec)
 
-    try:
-        data_type = properties["type"]
-    except KeyError:
-        raise ValueError(f"Field properties must include 'type' - {data_types}.")
-    else:
-        if data_type not in data_types:
-            raise ValueError(f"Invalid data type '{data_type}' - expected {data_types}.")
-
-    _VALIDATOR_FUNC[data_type](properties)
+    _VALIDATOR_FUNC[data_type](field_spec)
 
 
 def _validate_bool(properties):
@@ -432,8 +475,8 @@ def _validate_datetime(properties):
 def _validate_entity(properties):
     """Validate the properties for an entity field."""
 
-    if "link" not in properties:
-        raise ValueError("Must specify 'link' entity type for an entity field.")
+    if not properties.get("link"):
+        raise ValueError("Must specify 'link' entity type list for an entity field.")
 
     if "default" in properties:
         raise ValueError("An entity field cannot have a default.")
@@ -474,7 +517,7 @@ def _validate_json(properties):
 def _validate_multi_entity(properties):
     """Validate the properties for a multi-entity field."""
 
-    if "link" not in properties:
+    if not properties.get("link"):
         raise ValueError("Must specify 'link' entity type for a multi-entity field.")
 
     if "default" in properties:
@@ -516,6 +559,10 @@ _HANDLER_FUNC = {
     FieldType.TEXT_LIST.value: _handle_text_list,
 }
 
+_CONFORM_FUNC = {
+    FieldType.ENTITY.value: _conform_entity,
+    FieldType.ENTITY.value: _conform_entity,
+}
 
 _VALIDATOR_FUNC = {
     FieldType.BOOL.value: _validate_bool,
