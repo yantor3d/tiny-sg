@@ -207,3 +207,63 @@ def _check_entity(actual, expected):
     for field, expected_value in expected.items():
         assert field in actual, f"Field {field} not in result."
         assert actual[field] == expected_value, f"Field '{field}' does not have the expected value"
+
+
+def test_find_by_entity(connection):
+    results = connection.find_all(
+        "Shot",
+        [
+            ["sequence", "is", {"type": "Sequence", "id": 2}],
+        ],
+        [
+            "code",
+        ],
+    )
+
+    assert len(results) == 1
+    assert results[0]["code"] == "0200.0010"
+
+
+def test_find_by_not_entity(connection):
+    results = connection.find_all(
+        "Shot",
+        [
+            ["sequence", "is_not", {"type": "Sequence", "id": 1}],
+        ],
+        [
+            "code",
+        ],
+    )
+
+    assert len(results) == 1
+    assert results[0]["code"] == "0200.0010"
+
+
+def test_find_by_multi_entity(connection):
+    results = connection.find_all(
+        "Sequence",
+        [
+            ["shots", "is", {"type": "Shot", "id": 3}],
+        ],
+        [
+            "number",
+        ],
+    )
+
+    assert len(results) == 1
+    assert results[0]["number"] == "0200"
+
+
+def test_find_by_not_multi_entity(connection):
+    results = connection.find_all(
+        "Sequence",
+        [
+            ["shots", "is_not", {"type": "Shot", "id": 3}],
+        ],
+        [
+            "number",
+        ],
+    )
+
+    assert len(results) == 1
+    assert results[0]["number"] == "0100"

@@ -8,10 +8,11 @@ import datetime
 import dateutil.relativedelta
 import operator
 
+import tinysg.entity
 import tinysg.utils
 
 from enum import Enum
-from typing import Callable, List, Union
+from typing import Any, Callable, Iterable, List, Union
 from tinysg.exceptions import FilterSpecError
 
 DateOrDateTime = Union[datetime.date, datetime.datetime]
@@ -306,10 +307,29 @@ def in_(a, b):
         return a in b
 
 
-register(
+@register(
     FilterOperator.IS.value,
     FilterOperator.IS_NOT.value,
-)(operator.eq)
+)
+def is_(a, b):
+    """Return True if 'a' equal to 'b'."""
+
+    def _is_entity(value: Any) -> bool:
+        """Return True if the given value is an entity."""
+
+        return isinstance(value, dict) and "id" in value and "type" in value
+
+    def _is_entity_list(value: Iterable) -> bool:
+        """Return True if the given value is an entity list."""
+
+        return isinstance(value, list) and all(map(_is_entity, value))
+
+    if _is_entity(a) and _is_entity(b):
+        return tinysg.entity.eq(a, b)
+    elif _is_entity_list(a) and _is_entity(b):
+        return any([tinysg.entity.eq(a_, b) for a_ in a])
+    else:
+        return operator.eq(a, b)
 
 
 register(

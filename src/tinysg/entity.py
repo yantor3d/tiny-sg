@@ -28,6 +28,12 @@ def as_handle(entity: dict) -> dict:
     return _get(entity, [])
 
 
+def eq(a: dict, b: dict) -> bool:
+    """Return True if the two entities are the same."""
+
+    return a["type"] == b["type"] and a["id"] == b["id"]
+
+
 def get(entity_type: str, result: dict, return_fields: List[str] = None) -> dict:
     """Return the entity for the given tinydb Document."""
 
