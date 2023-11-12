@@ -7,6 +7,9 @@ import operator
 from tinydb.middlewares import CachingMiddleware, Middleware
 from typing import Tuple
 
+import tinysg.fields
+import tinysg.utils
+
 
 class ReadCachingMiddleware(CachingMiddleware):
     """Middleware that only caches reads."""
@@ -70,10 +73,7 @@ class PivotTableMiddleware(Middleware):
                     entity["type"] = entity_type
 
             for field in entity_fields[entity_type]:
-                if field["type"] in [
-                    "entity",
-                    "multi_entity",
-                ]:
+                if tinysg.fields.is_link(field):
                     self._join(data, entity_type, field)
                     link_tables.add(field["table"])
 
@@ -122,9 +122,9 @@ class PivotTableMiddleware(Middleware):
 
             links.sort(key=operator.itemgetter("id"))
 
-            if field["type"] == "entity":
-                entity[field["name"]] = next(iter(links), None)
-            else:
+            if tinysg.fields.is_entity(field):
+                entity[field["name"]] = tinysg.utils.first(links)
+            elif tinysg.fields.is_multi_entity(field):
                 entity[field["name"]] = links
 
     def _this_key(self, field: dict) -> str:
@@ -172,10 +172,7 @@ class PivotTableMiddleware(Middleware):
             link_fields = []
 
             for field in fields[entity_type]:
-                if field["type"] in [
-                    "entity",
-                    "multi_entity",
-                ]:
+                if tinysg.fields.is_link(field):
                     drop_field_names.append(field["name"])
                     link_fields.append(field)
 
@@ -187,9 +184,9 @@ class PivotTableMiddleware(Middleware):
                     this_key = self._this_key(field)
                     link_keys = self._link_keys(field)
 
-                    if field["type"] == "entity":
+                    if tinysg.fields.is_entity(field):
                         links = [entity.get(field["name"])]
-                    elif field["type"] == "multi_entity":
+                    elif tinysg.fields.is_multi_entity(field):
                         links = entity.get(field["name"]) or []
 
                     links = [link for link in links if link]

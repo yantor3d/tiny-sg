@@ -132,13 +132,13 @@ class Connection(object):
             fields = self.schema_field_read_all(entity_type)
 
             for field in fields:
-                if field["type"] == "entity":
+                if tinysg.fields.is_entity(field):
                     self.__update_entity_link_field(
                         entity_view,
                         field,
                         value=None,
                     )
-                elif field["type"] == "multi_entity":
+                elif tinysg.fields.is_multi_entity(field):
                     self.__update_multi_entity_link_field(
                         entity_view,
                         field,
@@ -179,7 +179,7 @@ class Connection(object):
 
         results = self.find_all(entity_type, filters, return_fields, retired_only)
 
-        return next(iter(results), None)
+        return tinysg.utils.first(results)
 
     def find_all(
         self,
@@ -248,14 +248,14 @@ class Connection(object):
 
             # Remove retired links
             for field in fields:
-                if field["type"] == "entity":
+                if tinysg.fields.is_entity(field):
                     link = retire_entity.get(field["name"])
 
                     if link is None:
                         continue
                     elif not self.__has_entity(link["type"], link["id"]):
                         retire_entity.pop(field["name"], None)
-                elif field["type"] == "multi_entity":
+                elif tinysg.fields.is_multi_entity(field):
                     links = retire_entity.get(field["name"], [])
                     links = [link for link in links if self.__has_entity(link["type"], link["id"])]
 
@@ -352,13 +352,13 @@ class Connection(object):
         for field_name, value in payload.items():
             field = fields_map[field_name]
 
-            if field["type"] == "entity":
+            if tinysg.fields.is_entity(field):
                 self.__update_entity_link_field(
                     entity,
                     field,
                     value or None,
                 )
-            elif field["type"] == "multi_entity":
+            elif tinysg.fields.is_multi_entity(field):
                 self.__update_multi_entity_link_field(
                     entity,
                     field,
@@ -486,13 +486,13 @@ class Connection(object):
 
             link = self.__get_entity_raw(link["type"], link["id"])
 
-            if reverse_field["type"] == "multi_entity":
+            if tinysg.fields.is_entity(reverse_field):
+                link.pop(field_name, None)
+            elif tinysg.fields.is_multi_entity(reverse_field):
                 old_value = link.get(field_name, [])
                 new_value = [each for each in old_value if each != entity]
 
                 link[field_name] = new_value
-            elif reverse_field["type"] == "entity":
-                link.pop(field_name, None)
 
         for link in new_links:
             if link["id"] in old_links_ids:
@@ -500,7 +500,7 @@ class Connection(object):
 
             link = self.__get_entity_raw(link["type"], link["id"])
 
-            if reverse_field["type"] == "multi_entity":
+            if tinysg.fields.is_multi_entity(reverse_field):
                 old_value = link.get(field_name, [])
                 new_value = old_value[:]
                 new_value.append(entity)
@@ -849,9 +849,9 @@ class Connection(object):
             if value is not None:
                 payload[field_name] = value
 
-                if field["type"] == "entity":
+                if tinysg.fields.is_entity(field):
                     linked_entities[field["name"]] = [value]
-                elif field["type"] == "multi_entity":
+                if tinysg.fields.is_multi_entity(field):
                     linked_entities[field["name"]] = value
 
         for field_name, links in sorted(linked_entities.items()):
@@ -984,9 +984,7 @@ class Connection(object):
             if schema["entity_type"] == entity_type:
                 continue
 
-            fields = [
-                field for field in schema["fields"] if field["type"] in ["entity", "multi_entity"]
-            ]
+            fields = [field for field in schema["fields"] if tinysg.fields.is_link(field)]
             fields = [field for field in fields if entity_type in field["link"]]
 
             if not fields:
@@ -996,12 +994,12 @@ class Connection(object):
 
             for entity in table.values():
                 for field in fields:
-                    if field["type"] == "entity":
+                    if tinysg.fields.is_entity(field):
                         value = entity.get(field["name"])
 
                         if (value is not None) and (value["type"] == entity_type):
                             entity.pop(field["name"], None)
-                    elif field["type"] == "multi_entity":
+                    if tinysg.fields.is_multi_entity(field):
                         entity.pop(field["name"], None)
 
             new[key] = schema
@@ -1016,7 +1014,7 @@ class Connection(object):
             if field["entity_type"] == entity_type:
                 continue
 
-            if field["type"] in ["entity", "multi_entity"]:
+            if tinysg.fields.is_link(field):
                 if [entity_type] == field["link"]:
                     continue
 

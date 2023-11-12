@@ -3,7 +3,7 @@
 import collections
 import datetime
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 
 def as_key(entity: dict) -> Tuple[str, int]:
@@ -17,6 +17,12 @@ def as_key(entity: dict) -> Tuple[str, int]:
     """
 
     return (entity["type"], entity["id"])
+
+
+def first(items: List[Any]) -> Union[Any, None]:
+    """Return the first item in the given list."""
+
+    return next(iter(items), None)
 
 
 def group_by_type(entity_list: List[dict]) -> Dict[str, List[dict]]:
