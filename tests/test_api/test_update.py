@@ -114,6 +114,14 @@ def test_update(connection):
     assert result["project"] == {"name": "prod", "id": 2, "type": "Project"}
 
 
+def test_update_deep_field_error(connection):
+    with pytest.raises(
+        ValueError,
+        match="Cannot update fields on linked entities.",
+    ):
+        connection.update("Sequence", 1, {"project.Project.code", "fail"})
+
+
 def test_update_required_field_error(connection):
     result = connection.create(
         "Asset",

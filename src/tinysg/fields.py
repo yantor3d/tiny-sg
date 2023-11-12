@@ -127,10 +127,10 @@ def parse_deep_field(return_field: str) -> DeepField:
     return DeepField(head, entity_type, tail)
 
 
-def is_deep_field(return_field: str) -> bool:
+def is_deep_field(field_name: str) -> bool:
     """Return true if the given return field is on a linked entity."""
 
-    return DEEP_FIELD_SEP in return_field
+    return DEEP_FIELD_SEP in field_name
 
 
 def is_entity(field_schema: dict) -> bool:

@@ -311,6 +311,10 @@ class Connection(object):
         if entity is None:
             raise EntityNotFound(f"A(n) '{entity_type}' entity for id {entity_id} does not exist.")
 
+        for field in data:
+            if tinysg.fields.is_deep_field(field):
+                raise ValueError("Cannot update fields on linked entities.")
+
         # __get_entity_payload drops nulls - update the original data to preserve them
         payload = dict(data)
         payload.update(self.__get_entity_payload(entity_type, data, payload={}))
