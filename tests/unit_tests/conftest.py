@@ -17,7 +17,7 @@ def test_data():
         return json.load(fp)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def mock_today():
     # Force coverage of the function.
     tinysg.utils.today()
@@ -28,10 +28,10 @@ def mock_today():
     mock_date.return_value = today
 
     with mock.patch("tinysg.utils.today", new=mock_date):
-        yield
+        yield mock_date
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def mock_now():
     # Force coverage of the function.
     tinysg.utils.now()
@@ -42,4 +42,4 @@ def mock_now():
     mock_datetime.return_value = now
 
     with mock.patch("tinysg.utils.now", new=mock_datetime):
-        yield
+        yield mock_datetime

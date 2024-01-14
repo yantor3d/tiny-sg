@@ -1,10 +1,14 @@
 """Test suite for the create method."""
 
+import datetime
 import json
 import pytest
 import re
 
+import tinysg.utils
+
 from tinysg import Connection
+from tinysg.fields import FieldType
 from tinysg.exceptions import EntityNotFound, SchemaError
 
 
@@ -195,3 +199,42 @@ def test_create_polymorphic_entity_field_value(connection, link):
     assert result["link"] is not None
     assert result["link"]["type"] == link["type"]
     assert result["link"]["id"] == link["id"]
+
+
+@pytest.mark.parametrize(
+    "created_at,called",
+    [
+        (None, True),
+        (datetime.datetime.now(), False),
+    ],
+)
+def test_create_with_defaults(connection, created_at, called, mock_now):
+    connection.schema_field_create(
+        "Asset",
+        "created_at",
+        {
+            "type": FieldType.DATE_TIME.value,
+            "default": True,
+        },
+    )
+
+    data = {
+        "asset_type": "Character",
+        "name": "The Hero",
+        "code": "the_hero",
+        "project": {"code": "test", "id": 1, "type": "Project"},
+    }
+
+    if created_at:
+        data["created_at"] = created_at
+
+    result = connection.create(
+        "Asset",
+        data,
+        [
+            "created_at",
+        ],
+    )
+
+    assert result["created_at"] is not None
+    assert mock_now.called == called

@@ -75,6 +75,7 @@ class Connection(object):
         """
 
         payload = self.__get_entity_payload(entity_type, data)
+        payload = self.__set_defaults(entity_type, payload)
 
         missing_fields = self.__check_entity_payload(entity_type, payload)
 
@@ -791,7 +792,9 @@ class Connection(object):
         result = {}
 
         for entity_type, entity_ids in link_ids.items():
-            entity_fields = [Fields.CODE.value] + link_fields.get(entity_type, [])
+            entity_fields = [Fields.CODE.value, Fields.NAME.value] + link_fields.get(
+                entity_type, []
+            )
             entity_list = self._db.table(entity_type).get(doc_ids=entity_ids)
             entity_list = [
                 tinysg.entity.get(entity_type, each, entity_fields) for each in entity_list
@@ -800,7 +803,8 @@ class Connection(object):
             self._join_linked_entities(entity_list, entity_fields)
 
             for entity in entity_list:
-                entity[Fields.NAME.value] = entity.pop(Fields.CODE.value)
+                if Fields.CODE.value in entity:
+                    entity[Fields.NAME.value] = entity.pop(Fields.CODE.value)
 
             result[entity_type] = tinysg.entity.as_entity_map(entity_list)
 
@@ -880,6 +884,24 @@ class Connection(object):
                     f"Cannot link '{link_type}' to '{entity_type}.{field_name}' "
                     f"because they do not exist: {missing_link_ids_str}"
                 )
+
+        return payload
+
+    def __set_defaults(self, entity_type: str, payload: dict) -> dict:
+        """Set the default values for the new entity."""
+
+        fields = self.schema_field_read_all(entity_type)
+
+        for field in fields:
+            field_name = field["name"]
+
+            if not field.get("default"):
+                continue
+
+            if field_name in payload:
+                continue
+
+            payload[field_name] = tinysg.fields.handle_value(None, field)
 
         return payload
 
